@@ -357,7 +357,7 @@ pointer-events: auto;
         <img src="https://www.steveharris.co.za/wp-content/uploads/2018/10/kumba-iron-ore-logo-1.jpg" class="landing-logo">
       <h1>Kumba Connect</h1>
         <p>Illegal Mining Control System</p>
-
+<input id="usernameInput" placeholder="Enter your name or ID">
         <button onclick="enterApp()">Enter Platform</button>
 
     </div>
@@ -1214,10 +1214,11 @@ ${locked?`<button disabled>🔒 Locked</button>`:
 </div>`;
 }).join("");
 
-feed.innerHTML=reports.map(r=>reportCard(r)).join("");
-statusList.innerHTML = reports.length === 0
+let userReports = reports.filter(r => r.userId === userMap[currentUser]);
+
+statusList.innerHTML = userReports.length === 0
 ? "<div class='card' style='text-align:center; color:gray;'>No updates available yet</div>"
-: feed.innerHTML;
+: userReports.map(r => reportCard(r)).join("");
 
 let pendingReports = reports.filter(r=>r.status==="pending");
 
@@ -1236,8 +1237,36 @@ renderClaimedRewards();
 render();
 
 function enterApp(){
-    document.getElementById('landing').style.display = "none"; // kill landing
-    showPage('home');}
+
+    let name = document.getElementById("usernameInput").value.trim();
+
+    if(!name){
+        pop("Please enter a username");
+        return;
+    }
+
+    // 🔑 CREATE USER IF NOT EXIST
+    if(!users[name]){
+        users[name] = {
+            points:0,
+            reports:0,
+            invalidCount:0,
+            isLocked:false
+        };
+
+        userMap[name] = "AR-" + Math.random().toString(36).substr(2,6).toUpperCase();
+        reverseUserMap[userMap[name]] = name;
+        wallets[name] = [];
+    }
+
+    // ✅ SWITCH USER
+    currentUser = name;
+
+    document.getElementById('landing').style.display = "none";
+    showPage('home');
+
+    pop("Welcome " + name);
+}
 
 function toggleMap(){
     let map = document.getElementById("mapContainer");
